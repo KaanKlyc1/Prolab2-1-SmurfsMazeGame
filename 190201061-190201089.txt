@@ -1,0 +1,2005 @@
+Main.java
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFrame;
+
+public class Main {
+
+    static JFrame fr;
+    static araYüz arayüz;
+    public static int[][] Harita;
+    public static int sayac1, sayac2;
+    public static oyuncu şirin;
+    public static ArrayList<düşman> düşmanlar;
+    public static düşman düşman;
+    static Scanner sc;
+    public static ArrayList<ArrayList<String>> yollar;
+    public static ArrayList<Kenar> kenarlar;
+    public static ArrayList<lokasyon> kapılar;
+
+    public static void main(String[] args) {
+
+        sayac1 = 0;
+        sayac2 = 0;
+        Harita = new int[11][13];
+        yollar = new ArrayList<>();
+        düşmanlar = new ArrayList<>();
+        kapılar = new ArrayList<>();
+        kenarlar = new ArrayList<>();
+        sc = new Scanner(System.in);
+        fr = new JFrame("Şirinler");
+        fr.setResizable(false);
+        fr.setFocusable(false);
+        fr.setSize(1000, 1000);
+        fr.setDefaultCloseOperation(fr.EXIT_ON_CLOSE);
+
+        arayüz = new araYüz();
+        arayüz.requestFocus();
+        arayüz.addKeyListener(arayüz);
+        arayüz.setFocusable(true);
+        arayüz.setFocusTraversalKeysEnabled(false);
+
+        şirinSec();
+        dosyadanOku();
+//        for (int i = 0; i < sayac1; i++) {
+//            for (int j = 0; j < sayac2; j++) {
+//                System.out.print(Harita[i][j]);
+//            }
+//            System.out.println("");
+//        }
+
+        for (int i = 0; i < 11; i++) {
+
+            for (int j = 0; j < 13; j++) {
+
+                Kenar kenar1 = new Kenar();
+
+                if (Harita[i][j] == 1) {
+
+                    kenar1.kenarY = i;
+                    kenar1.kenarX = j;
+                    kenarlar.add(kenar1);
+
+                }
+
+            }
+
+        }
+
+        for (var k : kenarlar) {
+
+            for (var l : kenarlar) {
+
+                if (k.kenarX == l.kenarX && k.kenarY + 1 == l.kenarY) {//alt komşu
+
+                    k.komşu[0] = l;
+
+                } else if (k.kenarX == l.kenarX && k.kenarY - 1 == l.kenarY) {//üst komşu
+
+                    k.komşu[1] = l;
+
+                } else if (k.kenarX + 1 == l.kenarX && k.kenarY == l.kenarY) {//sağ komşu
+
+                    k.komşu[2] = l;
+
+                } else if (k.kenarX - 1 == l.kenarX && k.kenarY == l.kenarY) {//sol komşu
+
+                    k.komşu[3] = l;
+
+                }
+
+            }
+
+        }
+
+        Kenar başlangıç = kenarlar.get(38);
+        başlangıç.uzunluk = 0;
+        kısaYolHesapla(başlangıç);
+
+        for (int i = 0; i < düşmanlar.size(); i++) {
+
+            int x = düşmanlar.get(i).getLokasyon().getX();
+            int y = düşmanlar.get(i).getLokasyon().getY();
+
+            if (düşmanlar.get(i).getID() == 1) {
+
+                for (var a : kenarlar) {
+
+                    if (a.kenarX == x && a.kenarY == y) {
+
+                        Kenar gargamelBasla = a;
+                        yollar.add(gargamelBasla.yol);
+                    }
+
+                }
+
+            }
+            if (düşmanlar.get(i).getID() == 2) {
+
+                for (var b : kenarlar) {
+
+                    if (b.kenarX == x && b.kenarY == y) {
+
+                        Kenar azmanBasla = b;
+                        yollar.add(azmanBasla.yol);
+                    }
+
+                }
+
+            }
+
+        }
+
+//        for (int i = 0; i < yollar.size(); i++) {
+//            for (int j = 0; j < yollar.get(i).size(); j++) {
+//
+//                String[] str = yollar.get(i).get(j).split(",");
+//                int x = Integer.parseInt(str[0]);
+//                int y = Integer.parseInt(str[1]);
+//
+//                System.out.println(x + " " + y);
+//            }
+//        }
+
+        fr.add(arayüz);
+        fr.setVisible(true);
+
+    }
+
+    static void kısaYolHesapla(Kenar basla) {
+
+        if (basla.komşu[0] != null) {//alt yol komşularını ekleyen kontrol
+
+            if (basla.komşu[0].uzunluk == -1) {
+
+                for (var i : basla.yol) {
+
+                    basla.komşu[0].yol.add(i);
+
+                }
+                basla.komşu[0].yol.add(basla.kenarX + "," + basla.kenarY);
+                basla.komşu[0].uzunluk = basla.komşu[0].yol.size();
+                kısaYolHesapla(basla.komşu[0]);
+            } else if (basla.komşu[0].uzunluk > (basla.uzunluk + 1)) {
+
+                ArrayList<String> yeniYol = new ArrayList<String>();
+
+                for (var i : basla.yol) {
+
+                    yeniYol.add(i);
+
+                }
+
+                yeniYol.add(basla.kenarX + "," + basla.kenarY);
+                basla.komşu[0].yol = yeniYol;
+                basla.komşu[0].uzunluk = basla.komşu[0].yol.size();
+                kısaYolHesapla(basla.komşu[0]);
+            }
+
+        }
+
+        if (basla.komşu[1] != null) {//üst yol komşularını ekleyen kontrol
+
+            if (basla.komşu[1].uzunluk == -1) {
+
+                for (var i : basla.yol) {
+
+                    basla.komşu[1].yol.add(i);
+
+                }
+                basla.komşu[1].yol.add(basla.kenarX + "," + basla.kenarY);
+                basla.komşu[1].uzunluk = basla.komşu[1].yol.size();
+                kısaYolHesapla(basla.komşu[1]);
+            } else if (basla.komşu[1].uzunluk > (basla.uzunluk + 1)) {
+
+                ArrayList<String> yeniYol = new ArrayList<String>();
+
+                for (var i : basla.yol) {
+
+                    yeniYol.add(i);
+
+                }
+
+                yeniYol.add(basla.kenarX + "," + basla.kenarY);
+                basla.komşu[1].yol = yeniYol;
+                basla.komşu[1].uzunluk = basla.komşu[1].yol.size();
+                kısaYolHesapla(basla.komşu[1]);
+            }
+
+        }
+
+        if (basla.komşu[2] != null) {//sağ yol komşularını ekleyen kontrol
+
+            if (basla.komşu[2].uzunluk == -1) {
+
+                for (var i : basla.yol) {
+
+                    basla.komşu[2].yol.add(i);
+
+                }
+                basla.komşu[2].yol.add(basla.kenarX + "," + basla.kenarY);
+                basla.komşu[2].uzunluk = basla.komşu[2].yol.size();
+                kısaYolHesapla(basla.komşu[2]);
+            } else if (basla.komşu[2].uzunluk > (basla.uzunluk + 1)) {
+
+                ArrayList<String> yeniYol = new ArrayList<String>();
+
+                for (var i : basla.yol) {
+
+                    yeniYol.add(i);
+
+                }
+
+                yeniYol.add(basla.kenarX + "," + basla.kenarY);
+                basla.komşu[2].yol = yeniYol;
+                basla.komşu[2].uzunluk = basla.komşu[2].yol.size();
+                kısaYolHesapla(basla.komşu[2]);
+            }
+
+        }
+
+        if (basla.komşu[3] != null) {//sol yol komşularını ekleyen kontrol
+
+            if (basla.komşu[3].uzunluk == -1) {
+
+                for (var i : basla.yol) {
+
+                    basla.komşu[3].yol.add(i);
+
+                }
+                basla.komşu[3].yol.add(basla.kenarX + "," + basla.kenarY);
+                basla.komşu[3].uzunluk = basla.komşu[3].yol.size();
+                kısaYolHesapla(basla.komşu[3]);
+            } else if (basla.komşu[3].uzunluk > (basla.uzunluk + 1)) {
+
+                ArrayList<String> yeniYol = new ArrayList<String>();
+
+                for (var i : basla.yol) {
+
+                    yeniYol.add(i);
+
+                }
+
+                yeniYol.add(basla.kenarX + "," + basla.kenarY);
+                basla.komşu[3].yol = yeniYol;
+                basla.komşu[3].uzunluk = basla.komşu[3].yol.size();
+                kısaYolHesapla(basla.komşu[3]);
+            }
+
+        }
+
+    }
+
+    static void dosyadanOku() {
+        try {
+
+            File dosya = new File("harita.txt");
+            BufferedReader oku = new BufferedReader(new InputStreamReader(
+                    new FileInputStream(dosya), "UTF-8"));
+
+            String satır;
+
+            while ((satır = oku.readLine()) != null) {
+
+                String[] ayrım = satır.split(":");
+
+                if (ayrım[0].equals("Karakter")) {
+
+                    düşmanOluştur(satır);
+
+                } else {
+
+                    haritaOluştur(satır);
+
+                }
+
+            }
+
+        } catch (Exception e) {
+        }
+
+    }
+
+    static void haritaOluştur(String satır) {
+
+        sayac2 = 0;
+
+        for (int i = 0; i < satır.length(); i++) {
+
+            if (satır.charAt(i) == '0') {
+
+                Harita[sayac1][sayac2] = 0;
+                sayac2++;
+            } else if (satır.charAt(i) == '1') {
+
+                Harita[sayac1][sayac2] = 1;
+                sayac2++;
+
+            }
+
+        }
+        sayac1++;
+    }
+
+    static void şirinSec() {
+
+        System.out.println("Tembel şirin için 1'e basın."
+                + "\nGözlüklü şirin için 2'ye basın.");
+
+        int seçim = sc.nextInt();
+
+        if (seçim == 1) {
+            şirin = new tembelŞirin(20, 1, "tembelŞirin", "oyuncu", new lokasyon(6, 5));
+        } else if (seçim == 2) {
+            şirin = new gözlüklüŞirin(20, 2, "gözlüklüŞirin", "oyuncu", new lokasyon(6, 5));
+        }
+    }
+
+    static void düşmanOluştur(String satır) {
+
+        düşman kötü;
+        String[] ayraç = satır.split(",");
+        String[] ayraç1 = ayraç[0].split(":");
+        String[] ayraç2 = ayraç[1].split(":");
+
+        if (ayraç1[1].equals("Gargamel")) {
+
+            kötü = new gargamel(1, "gargamel", "düşman", lokasyonOluştur(ayraç2[1]));
+            düşmanlar.add(kötü);
+            kapılar.add(lokasyonOluştur(ayraç2[1]));
+
+        }
+
+        if (ayraç1[1].equals("Azman")) {
+
+            kötü = new azman(2, "azman", "düşman", lokasyonOluştur(ayraç2[1]));
+            düşmanlar.add(kötü);
+            kapılar.add(lokasyonOluştur(ayraç2[1]));
+        }
+
+    }
+
+    static lokasyon lokasyonOluştur(String kapı) {
+
+        if (kapı.equals("A")) {
+            return new lokasyon(3, 0);
+        } else if (kapı.equals("B")) {
+            return new lokasyon(10, 0);
+        } else if (kapı.equals("C")) {
+            return new lokasyon(0, 5);
+        } else if (kapı.equals("D")) {
+            return new lokasyon(3, 10);
+        } else {
+            return null;
+        }
+
+    }
+
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Kenar.java
+import java.util.ArrayList;
+
+
+public class Kenar {
+   int kenarX;
+   int kenarY;
+   int uzunluk=-1;
+   Kenar[] komşu = new Kenar[4];
+   ArrayList <String> yol = new ArrayList <>();
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+araYüz.java
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
+import javax.imageio.stream.FileImageInputStream;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
+public class araYüz extends JPanel implements KeyListener, ActionListener {
+
+    private BufferedImage image;
+
+    public araYüz() {
+
+        setBackground(Color.WHITE);
+
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g); //To change body of generated methods, choose Tools | Templates.
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, 1000, 1000);
+
+        for (int i = 0; i < 11; i++) {
+
+            for (int j = 0; j < 13; j++) {
+
+                //labirent çizimi
+                if (Main.Harita[i][j] == 1) {
+
+                    g.setColor(Color.YELLOW);
+                    g.fill3DRect(100 + j * 60, 120 + i * 60, 60, 60, true);
+                    g.setColor(Color.WHITE);
+
+                } else {
+
+                    g.setColor(Color.DARK_GRAY);
+                    g.fill3DRect(100 + j * 60, 120 + i * 60, 60, 60, true);
+                    g.setColor(Color.WHITE);
+
+                }
+
+                if (j == 3 && i == 0) {//A kapısı
+
+                    g.setColor(Color.PINK);
+                    g.fill3DRect(100 + j * 60, 120 + i * 60, 60, 60, true);
+                    try {
+                        image = ImageIO.read(new FileImageInputStream(new File("A.png")));
+                        g.drawImage(image, 115 + (60 * j), 130 + (60 * i), image.getWidth(), image.getHeight(), this);
+                    } catch (IOException ex) {
+                        Logger.getLogger(araYüz.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+
+                if (j == 10 && i == 0) {//B kapısı
+
+                    g.setColor(Color.PINK);
+                    g.fill3DRect(100 + j * 60, 120 + i * 60, 60, 60, true);
+                    try {
+                        image = ImageIO.read(new FileImageInputStream(new File("B.png")));
+                        g.drawImage(image, 115 + (60 * j), 130 + (60 * i), image.getWidth(), image.getHeight(), this);
+                    } catch (IOException ex) {
+                        Logger.getLogger(araYüz.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+
+                if (j == 0 && i == 5) {//C kapısı
+
+                    g.setColor(Color.PINK);
+                    g.fill3DRect(100 + j * 60, 120 + i * 60, 60, 60, true);
+                    try {
+                        image = ImageIO.read(new FileImageInputStream(new File("C.png")));
+                        g.drawImage(image, 115 + (60 * j), 130 + (60 * i), image.getWidth(), image.getHeight(), this);
+                    } catch (IOException ex) {
+                        Logger.getLogger(araYüz.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+
+                if (j == 3 && i == 10) {//D kapısı
+
+                    g.setColor(Color.PINK);
+                    g.fill3DRect(100 + j * 60, 120 + i * 60, 60, 60, true);
+                    try {
+                        image = ImageIO.read(new FileImageInputStream(new File("D.png")));
+                        g.drawImage(image, 115 + (60 * j), 130 + (60 * i), image.getWidth(), image.getHeight(), this);
+                    } catch (IOException ex) {
+                        Logger.getLogger(araYüz.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+
+            }
+
+        }
+
+        for (int i = 0; i < Main.yollar.size(); i++) {
+            for (int j = 0; j < Main.yollar.get(i).size(); j++) {
+
+                String[] str = Main.yollar.get(i).get(j).split(",");
+                int x = Integer.parseInt(str[0]);
+                int y = Integer.parseInt(str[1]);
+
+                g.setColor(Color.GREEN);
+                g.fill3DRect(100 + (x * 60), 120 + (y * 60), 60, 60, true);
+
+            }
+        }
+
+        try {
+            image = ImageIO.read(new FileImageInputStream(new File("sirine.png")));
+            g.drawImage(image, 870, 510, image.getWidth() / 4, image.getHeight() / 4, this);
+        } catch (IOException ex) {
+            Logger.getLogger(araYüz.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            image = ImageIO.read(new FileImageInputStream(new File("skor.png")));
+            g.drawImage(image, 100, 30, image.getWidth(), image.getHeight(), this);
+        } catch (IOException ex) {
+            Logger.getLogger(araYüz.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        if (Main.şirin.getID() == 1) {
+
+            int x = Main.şirin.getLokasyon().getX();
+            int y = Main.şirin.getLokasyon().getY();
+
+            try {
+                image = ImageIO.read(new FileImageInputStream(new File("tembelsirin.png")));
+                g.drawImage(image, 100 + (x * 60), 120 + (y * 60), image.getWidth(), image.getHeight(), this);
+            } catch (IOException ex) {
+                Logger.getLogger(araYüz.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        }
+
+        if (Main.şirin.getID() == 2) {
+
+            int x = Main.şirin.getLokasyon().getX();
+            int y = Main.şirin.getLokasyon().getY();
+
+            try {
+                image = ImageIO.read(new FileImageInputStream(new File("gozluklusirin.png")));
+                g.drawImage(image, 100 + (60 * x), 120 + (60 * y), image.getWidth(), image.getHeight(), this);
+            } catch (IOException ex) {
+                Logger.getLogger(araYüz.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        }
+
+        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+            if (new Rectangle(100 + (60 * Main.şirin.getLokasyon().getX()), 120 + (60 * Main.şirin.getLokasyon().getY()), 60, 60).intersects(new Rectangle(100 + (60 * Main.düşmanlar.get(i).getLokasyon().getX()), 120 + (60 * Main.düşmanlar.get(i).getLokasyon().getY()), 45, 45))) {
+
+                if (Main.düşmanlar.get(i).getID() == 1) {
+
+                    Main.şirin.setSkor(Main.şirin.getSkor() - 15);
+                    Main.düşmanlar.get(i).setLokasyon(Main.kapılar.get(i));
+
+                } else if (Main.düşmanlar.get(i).getID() == 2) {
+
+                    Main.şirin.setSkor(Main.şirin.getSkor() - 5);
+                    Main.düşmanlar.get(i).setLokasyon(Main.kapılar.get(i));
+
+                }
+
+            }
+
+        }
+
+        g.setColor(Color.BLACK);
+        g.setFont(new Font(TOOL_TIP_TEXT_KEY, Font.PLAIN, 80));
+        g.drawString("" + Main.şirin.getSkor(), 350, 90);
+
+        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+
+            int x = Main.düşmanlar.get(i).getLokasyon().getX();
+            int y = Main.düşmanlar.get(i).getLokasyon().getY();
+
+            if (Main.düşmanlar.get(i).getID() == 1) {
+
+                try {
+                    image = ImageIO.read(new FileImageInputStream(new File("gargamel.png")));
+                    g.drawImage(image, 100 + (60 * x), 120 + (60 * y), image.getWidth(), image.getHeight(), this);
+                } catch (IOException ex) {
+                    Logger.getLogger(araYüz.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
+            if (Main.düşmanlar.get(i).getID() == 2) {
+
+                try {
+                    image = ImageIO.read(new FileImageInputStream(new File("azman.png")));
+                    g.drawImage(image, 100 + (60 * x), 120 + (60 * y), image.getWidth(), image.getHeight(), this);
+                } catch (IOException ex) {
+                    Logger.getLogger(araYüz.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
+
+        }
+
+        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+
+            if (Main.düşmanlar.get(i).getID() == 1) {
+
+                g.setColor(Color.BLACK);
+                g.setFont(new Font(TOOL_TIP_TEXT_KEY, Font.PLAIN, 26));
+                g.drawString(Main.düşmanlar.get(i).getAd() + " (" + Main.düşmanlar.get(i).getLokasyon().getX() + "," + Main.düşmanlar.get(i).getLokasyon().getY() + ") noktasından " + "(" + Main.şirin.getLokasyon().getX() + "," + Main.şirin.getLokasyon().getY() + ") noktasına " + Main.yollar.get(i).size() + " adımda ulaşmaktadır.", 100, 810 + (i * 60));
+
+            } else if (Main.düşmanlar.get(i).getID() == 2) {
+
+                g.setColor(Color.BLACK);
+                g.setFont(new Font(TOOL_TIP_TEXT_KEY, Font.PLAIN, 26));
+                g.drawString(Main.düşmanlar.get(i).getAd() + " (" + Main.düşmanlar.get(i).getLokasyon().getX() + "," + Main.düşmanlar.get(i).getLokasyon().getY() + ") noktasından " + "(" + Main.şirin.getLokasyon().getX() + "," + Main.şirin.getLokasyon().getY() + ") noktasına " + Main.yollar.get(i).size() + " adımda ulaşmaktadır.", 100, 810 + (i * 60));
+
+            }
+
+        }
+
+        if (Main.şirin.getSkor() > 0 && new Rectangle(100 + (60 * Main.şirin.getLokasyon().getX()), 120 + (60 * Main.şirin.getLokasyon().getY()), 60, 60).intersects(new Rectangle(100 + (60 * 12), 120 + (60 * 7), 60, 60))) {
+
+            String message = "!Kazandınız!";
+            JOptionPane.showMessageDialog(this, message);
+            System.exit(0);
+        }
+
+        if (Main.şirin.getSkor() <= 0) {
+
+            String message = "!Kaybettiniz!";
+            JOptionPane.showMessageDialog(this, message);
+            System.exit(0);
+
+        }
+
+    }
+
+    @Override
+    public void repaint() {
+        super.repaint(); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+
+        int c = e.getKeyCode();
+
+        if (c == KeyEvent.VK_RIGHT) {
+
+            int x = Main.şirin.getLokasyon().getX();
+            int y = Main.şirin.getLokasyon().getY();
+
+            if (Main.şirin.getID() == 1 && Main.şirin.getSkor() > 0) {
+
+                if ((x + 1) <= 13) {
+
+                    if (Main.Harita[y][x + 1] == 1) {
+
+                        Main.şirin.getLokasyon().setX(x + 1);
+
+                        Main.kenarlar.removeAll(Main.kenarlar);
+                        Main.yollar.removeAll(Main.yollar);
+
+                        for (int i = 0; i < 11; i++) {
+
+                            for (int j = 0; j < 13; j++) {
+
+                                Kenar kenar = new Kenar();
+
+                                if (Main.Harita[i][j] == 1) {
+
+                                    kenar.kenarY = i;
+                                    kenar.kenarX = j;
+                                    Main.kenarlar.add(kenar);
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var k : Main.kenarlar) {
+
+                            for (var l : Main.kenarlar) {
+
+                                if (k.kenarX == l.kenarX && k.kenarY + 1 == l.kenarY) {//alt komşu
+
+                                    k.komşu[0] = l;
+
+                                } else if (k.kenarX == l.kenarX && k.kenarY - 1 == l.kenarY) {//üst komşu
+
+                                    k.komşu[1] = l;
+
+                                } else if (k.kenarX + 1 == l.kenarX && k.kenarY == l.kenarY) {//sağ komşu
+
+                                    k.komşu[2] = l;
+
+                                } else if (k.kenarX - 1 == l.kenarX && k.kenarY == l.kenarY) {//sol komşu
+
+                                    k.komşu[3] = l;
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var a : Main.kenarlar) {
+
+                            if (a.kenarX == Main.şirin.getLokasyon().getX() && a.kenarY == Main.şirin.getLokasyon().getY()) {
+
+                                Kenar başlangıç = a;
+                                başlangıç.uzunluk = 0;
+                                Main.kısaYolHesapla(başlangıç);
+
+                            }
+
+                        }
+
+                        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+
+                            x = Main.düşmanlar.get(i).getLokasyon().getX();
+                            y = Main.düşmanlar.get(i).getLokasyon().getY();
+
+                            if (Main.düşmanlar.get(i).getID() == 1) {
+
+                                for (var a : Main.kenarlar) {
+
+                                    if (a.kenarX == x && a.kenarY == y) {
+
+                                        Kenar gargamelBasla = a;
+                                        Main.yollar.add(gargamelBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    if (Main.yollar.get(i).size() >= 2) {
+
+                                        int index = Main.yollar.get(i).size() - 2;
+                                        String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                        x = Integer.parseInt(ayraç[0]);
+                                        y = Integer.parseInt(ayraç[1]);
+
+                                        Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                        Main.düşmanlar.get(i).getLokasyon().setY(y);
+
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                    }
+                                }
+
+                            }
+                            if (Main.düşmanlar.get(i).getID() == 2) {
+
+                                for (var b : Main.kenarlar) {
+
+                                    if (b.kenarX == x && b.kenarY == y) {
+
+                                        Kenar azmanBasla = b;
+                                        Main.yollar.add(azmanBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    int index = Main.yollar.get(i).size() - 1;
+                                    String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                    x = Integer.parseInt(ayraç[0]);
+                                    y = Integer.parseInt(ayraç[1]);
+
+                                    Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                    Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                    Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                }
+
+                            }
+
+                        }
+                        repaint();
+
+                    }
+
+                }
+
+            }
+
+            if (Main.şirin.getID() == 2 && Main.şirin.getSkor() > 0) {
+
+                if ((x + 2) <= 13) {
+
+                    if (Main.Harita[y][x + 2] == 1 && Main.Harita[y][x + 1] != 0) {
+
+                        Main.şirin.getLokasyon().setX(x + 2);
+
+                        Main.kenarlar.removeAll(Main.kenarlar);
+                        Main.yollar.removeAll(Main.yollar);
+
+                        for (int i = 0; i < 11; i++) {
+
+                            for (int j = 0; j < 13; j++) {
+
+                                Kenar kenar = new Kenar();
+
+                                if (Main.Harita[i][j] == 1) {
+
+                                    kenar.kenarY = i;
+                                    kenar.kenarX = j;
+                                    Main.kenarlar.add(kenar);
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var k : Main.kenarlar) {
+
+                            for (var l : Main.kenarlar) {
+
+                                if (k.kenarX == l.kenarX && k.kenarY + 1 == l.kenarY) {//alt komşu
+
+                                    k.komşu[0] = l;
+
+                                } else if (k.kenarX == l.kenarX && k.kenarY - 1 == l.kenarY) {//üst komşu
+
+                                    k.komşu[1] = l;
+
+                                } else if (k.kenarX + 1 == l.kenarX && k.kenarY == l.kenarY) {//sağ komşu
+
+                                    k.komşu[2] = l;
+
+                                } else if (k.kenarX - 1 == l.kenarX && k.kenarY == l.kenarY) {//sol komşu
+
+                                    k.komşu[3] = l;
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var a : Main.kenarlar) {
+
+                            if (a.kenarX == Main.şirin.getLokasyon().getX() && a.kenarY == Main.şirin.getLokasyon().getY()) {
+
+                                Kenar başlangıç = a;
+                                başlangıç.uzunluk = 0;
+                                Main.kısaYolHesapla(başlangıç);
+
+                            }
+
+                        }
+
+                        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+
+                            x = Main.düşmanlar.get(i).getLokasyon().getX();
+                            y = Main.düşmanlar.get(i).getLokasyon().getY();
+
+                            if (Main.düşmanlar.get(i).getID() == 1) {
+
+                                for (var a : Main.kenarlar) {
+
+                                    if (a.kenarX == x && a.kenarY == y) {
+
+                                        Kenar gargamelBasla = a;
+                                        Main.yollar.add(gargamelBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    if (Main.yollar.get(i).size() >= 2) {
+
+                                        int index = Main.yollar.get(i).size() - 2;
+                                        String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                        x = Integer.parseInt(ayraç[0]);
+                                        y = Integer.parseInt(ayraç[1]);
+
+                                        Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                        Main.düşmanlar.get(i).getLokasyon().setY(y);
+
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                    }
+                                }
+
+                            }
+                            if (Main.düşmanlar.get(i).getID() == 2) {
+
+                                for (var b : Main.kenarlar) {
+
+                                    if (b.kenarX == x && b.kenarY == y) {
+
+                                        Kenar azmanBasla = b;
+                                        Main.yollar.add(azmanBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    int index = Main.yollar.get(i).size() - 1;
+                                    String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                    x = Integer.parseInt(ayraç[0]);
+                                    y = Integer.parseInt(ayraç[1]);
+
+                                    Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                    Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                    Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                }
+
+                            }
+
+                        }
+
+                        repaint();
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        if (c == KeyEvent.VK_DOWN) {
+
+            int x = Main.şirin.getLokasyon().getX();
+            int y = Main.şirin.getLokasyon().getY();
+
+            if (Main.şirin.getID() == 1 && Main.şirin.getSkor() > 0) {
+
+                if ((y + 1) <= 11) {
+
+                    if (Main.Harita[y + 1][x] == 1) {
+
+                        Main.şirin.getLokasyon().setY(y + 1);
+
+                        Main.kenarlar.removeAll(Main.kenarlar);
+                        Main.yollar.removeAll(Main.yollar);
+
+                        for (int i = 0; i < 11; i++) {
+
+                            for (int j = 0; j < 13; j++) {
+
+                                Kenar kenar = new Kenar();
+
+                                if (Main.Harita[i][j] == 1) {
+
+                                    kenar.kenarY = i;
+                                    kenar.kenarX = j;
+                                    Main.kenarlar.add(kenar);
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var k : Main.kenarlar) {
+
+                            for (var l : Main.kenarlar) {
+
+                                if (k.kenarX == l.kenarX && k.kenarY + 1 == l.kenarY) {//alt komşu
+
+                                    k.komşu[0] = l;
+
+                                } else if (k.kenarX == l.kenarX && k.kenarY - 1 == l.kenarY) {//üst komşu
+
+                                    k.komşu[1] = l;
+
+                                } else if (k.kenarX + 1 == l.kenarX && k.kenarY == l.kenarY) {//sağ komşu
+
+                                    k.komşu[2] = l;
+
+                                } else if (k.kenarX - 1 == l.kenarX && k.kenarY == l.kenarY) {//sol komşu
+
+                                    k.komşu[3] = l;
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var a : Main.kenarlar) {
+
+                            if (a.kenarX == Main.şirin.getLokasyon().getX() && a.kenarY == Main.şirin.getLokasyon().getY()) {
+
+                                Kenar başlangıç = a;
+                                başlangıç.uzunluk = 0;
+                                Main.kısaYolHesapla(başlangıç);
+
+                            }
+
+                        }
+
+                        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+
+                            x = Main.düşmanlar.get(i).getLokasyon().getX();
+                            y = Main.düşmanlar.get(i).getLokasyon().getY();
+
+                            if (Main.düşmanlar.get(i).getID() == 1) {
+
+                                for (var a : Main.kenarlar) {
+
+                                    if (a.kenarX == x && a.kenarY == y) {
+
+                                        Kenar gargamelBasla = a;
+                                        Main.yollar.add(gargamelBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    if (Main.yollar.get(i).size() >= 2) {
+
+                                        int index = Main.yollar.get(i).size() - 2;
+                                        String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                        x = Integer.parseInt(ayraç[0]);
+                                        y = Integer.parseInt(ayraç[1]);
+
+                                        Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                        Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                    }
+                                }
+
+                            }
+                            if (Main.düşmanlar.get(i).getID() == 2) {
+
+                                for (var b : Main.kenarlar) {
+
+                                    if (b.kenarX == x && b.kenarY == y) {
+
+                                        Kenar azmanBasla = b;
+                                        Main.yollar.add(azmanBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    int index = Main.yollar.get(i).size() - 1;
+                                    String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                    x = Integer.parseInt(ayraç[0]);
+                                    y = Integer.parseInt(ayraç[1]);
+
+                                    Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                    Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                    Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+                                }
+
+                            }
+
+                        }
+                        repaint();
+                    }
+
+                }
+
+            }
+
+            if (Main.şirin.getID() == 2 && Main.şirin.getSkor() > 0) {
+
+                if ((y + 2) <= 11) {
+
+                    if (Main.Harita[y + 2][x] == 1 && Main.Harita[y + 1][x] != 0) {
+
+                        Main.şirin.getLokasyon().setY(y + 2);
+
+                        Main.kenarlar.removeAll(Main.kenarlar);
+                        Main.yollar.removeAll(Main.yollar);
+
+                        for (int i = 0; i < 11; i++) {
+
+                            for (int j = 0; j < 13; j++) {
+
+                                Kenar kenar = new Kenar();
+
+                                if (Main.Harita[i][j] == 1) {
+
+                                    kenar.kenarY = i;
+                                    kenar.kenarX = j;
+                                    Main.kenarlar.add(kenar);
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var k : Main.kenarlar) {
+
+                            for (var l : Main.kenarlar) {
+
+                                if (k.kenarX == l.kenarX && k.kenarY + 1 == l.kenarY) {//alt komşu
+
+                                    k.komşu[0] = l;
+
+                                } else if (k.kenarX == l.kenarX && k.kenarY - 1 == l.kenarY) {//üst komşu
+
+                                    k.komşu[1] = l;
+
+                                } else if (k.kenarX + 1 == l.kenarX && k.kenarY == l.kenarY) {//sağ komşu
+
+                                    k.komşu[2] = l;
+
+                                } else if (k.kenarX - 1 == l.kenarX && k.kenarY == l.kenarY) {//sol komşu
+
+                                    k.komşu[3] = l;
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var a : Main.kenarlar) {
+
+                            if (a.kenarX == Main.şirin.getLokasyon().getX() && a.kenarY == Main.şirin.getLokasyon().getY()) {
+
+                                Kenar başlangıç = a;
+                                başlangıç.uzunluk = 0;
+                                Main.kısaYolHesapla(başlangıç);
+
+                            }
+
+                        }
+
+                        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+
+                            x = Main.düşmanlar.get(i).getLokasyon().getX();
+                            y = Main.düşmanlar.get(i).getLokasyon().getY();
+
+                            if (Main.düşmanlar.get(i).getID() == 1) {
+
+                                for (var a : Main.kenarlar) {
+
+                                    if (a.kenarX == x && a.kenarY == y) {
+
+                                        Kenar gargamelBasla = a;
+                                        Main.yollar.add(gargamelBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    if (Main.yollar.get(i).size() >= 2) {
+
+                                        int index = Main.yollar.get(i).size() - 2;
+                                        String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                        x = Integer.parseInt(ayraç[0]);
+                                        y = Integer.parseInt(ayraç[1]);
+
+                                        Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                        Main.düşmanlar.get(i).getLokasyon().setY(y);
+
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                    }
+                                }
+
+                            }
+                            if (Main.düşmanlar.get(i).getID() == 2) {
+
+                                for (var b : Main.kenarlar) {
+
+                                    if (b.kenarX == x && b.kenarY == y) {
+
+                                        Kenar azmanBasla = b;
+                                        Main.yollar.add(azmanBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    int index = Main.yollar.get(i).size() - 1;
+                                    String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                    x = Integer.parseInt(ayraç[0]);
+                                    y = Integer.parseInt(ayraç[1]);
+
+                                    Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                    Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                    Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                }
+
+                            }
+
+                        }
+
+                        repaint();
+                    }
+
+                }
+
+            }
+
+        }
+
+        if (c == KeyEvent.VK_LEFT) {
+
+            int x = Main.şirin.getLokasyon().getX();
+            int y = Main.şirin.getLokasyon().getY();
+
+            if (Main.şirin.getID() == 1 && Main.şirin.getSkor() > 0) {
+
+                if ((x - 1) >= 0) {
+
+                    if (Main.Harita[y][x - 1] == 1) {
+
+                        Main.şirin.getLokasyon().setX(x - 1);
+
+                        Main.kenarlar.removeAll(Main.kenarlar);
+                        Main.yollar.removeAll(Main.yollar);
+
+                        for (int i = 0; i < 11; i++) {
+
+                            for (int j = 0; j < 13; j++) {
+
+                                Kenar kenar = new Kenar();
+
+                                if (Main.Harita[i][j] == 1) {
+
+                                    kenar.kenarY = i;
+                                    kenar.kenarX = j;
+                                    Main.kenarlar.add(kenar);
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var k : Main.kenarlar) {
+
+                            for (var l : Main.kenarlar) {
+
+                                if (k.kenarX == l.kenarX && k.kenarY + 1 == l.kenarY) {//alt komşu
+
+                                    k.komşu[0] = l;
+
+                                } else if (k.kenarX == l.kenarX && k.kenarY - 1 == l.kenarY) {//üst komşu
+
+                                    k.komşu[1] = l;
+
+                                } else if (k.kenarX + 1 == l.kenarX && k.kenarY == l.kenarY) {//sağ komşu
+
+                                    k.komşu[2] = l;
+
+                                } else if (k.kenarX - 1 == l.kenarX && k.kenarY == l.kenarY) {//sol komşu
+
+                                    k.komşu[3] = l;
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var a : Main.kenarlar) {
+
+                            if (a.kenarX == Main.şirin.getLokasyon().getX() && a.kenarY == Main.şirin.getLokasyon().getY()) {
+
+                                Kenar başlangıç = a;
+                                başlangıç.uzunluk = 0;
+                                Main.kısaYolHesapla(başlangıç);
+
+                            }
+
+                        }
+
+                        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+
+                            x = Main.düşmanlar.get(i).getLokasyon().getX();
+                            y = Main.düşmanlar.get(i).getLokasyon().getY();
+
+                            if (Main.düşmanlar.get(i).getID() == 1) {
+
+                                for (var a : Main.kenarlar) {
+
+                                    if (a.kenarX == x && a.kenarY == y) {
+
+                                        Kenar gargamelBasla = a;
+                                        Main.yollar.add(gargamelBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    if (Main.yollar.get(i).size() >= 2) {
+
+                                        int index = Main.yollar.get(i).size() - 2;
+                                        String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                        x = Integer.parseInt(ayraç[0]);
+                                        y = Integer.parseInt(ayraç[1]);
+
+                                        Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                        Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                    }
+
+                                }
+
+                            }
+                            if (Main.düşmanlar.get(i).getID() == 2) {
+
+                                for (var b : Main.kenarlar) {
+
+                                    if (b.kenarX == x && b.kenarY == y) {
+
+                                        Kenar azmanBasla = b;
+                                        Main.yollar.add(azmanBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    int index = Main.yollar.get(i).size() - 1;
+                                    String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                    x = Integer.parseInt(ayraç[0]);
+                                    y = Integer.parseInt(ayraç[1]);
+
+                                    Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                    Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                    Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                }
+
+                            }
+
+                        }
+                        repaint();
+                    }
+
+                }
+
+            }
+
+            if (Main.şirin.getID() == 2 && Main.şirin.getSkor() > 0) {
+
+                if ((x - 2) >= 0) {
+
+                    if (Main.Harita[y][x - 2] == 1 && Main.Harita[y][x - 1] != 0) {
+
+                        Main.şirin.getLokasyon().setX(x - 2);
+
+                        Main.kenarlar.removeAll(Main.kenarlar);
+                        Main.yollar.removeAll(Main.yollar);
+
+                        for (int i = 0; i < 11; i++) {
+
+                            for (int j = 0; j < 13; j++) {
+
+                                Kenar kenar = new Kenar();
+
+                                if (Main.Harita[i][j] == 1) {
+
+                                    kenar.kenarY = i;
+                                    kenar.kenarX = j;
+                                    Main.kenarlar.add(kenar);
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var k : Main.kenarlar) {
+
+                            for (var l : Main.kenarlar) {
+
+                                if (k.kenarX == l.kenarX && k.kenarY + 1 == l.kenarY) {//alt komşu
+
+                                    k.komşu[0] = l;
+
+                                } else if (k.kenarX == l.kenarX && k.kenarY - 1 == l.kenarY) {//üst komşu
+
+                                    k.komşu[1] = l;
+
+                                } else if (k.kenarX + 1 == l.kenarX && k.kenarY == l.kenarY) {//sağ komşu
+
+                                    k.komşu[2] = l;
+
+                                } else if (k.kenarX - 1 == l.kenarX && k.kenarY == l.kenarY) {//sol komşu
+
+                                    k.komşu[3] = l;
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var a : Main.kenarlar) {
+
+                            if (a.kenarX == Main.şirin.getLokasyon().getX() && a.kenarY == Main.şirin.getLokasyon().getY()) {
+
+                                Kenar başlangıç = a;
+                                başlangıç.uzunluk = 0;
+                                Main.kısaYolHesapla(başlangıç);
+
+                            }
+
+                        }
+
+                        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+
+                            x = Main.düşmanlar.get(i).getLokasyon().getX();
+                            y = Main.düşmanlar.get(i).getLokasyon().getY();
+
+                            if (Main.düşmanlar.get(i).getID() == 1) {
+
+                                for (var a : Main.kenarlar) {
+
+                                    if (a.kenarX == x && a.kenarY == y) {
+
+                                        Kenar gargamelBasla = a;
+                                        Main.yollar.add(gargamelBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    if (Main.yollar.get(i).size() >= 2) {
+
+                                        int index = Main.yollar.get(i).size() - 2;
+                                        String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                        x = Integer.parseInt(ayraç[0]);
+                                        y = Integer.parseInt(ayraç[1]);
+
+                                        Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                        Main.düşmanlar.get(i).getLokasyon().setY(y);
+
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                    }
+                                }
+
+                            }
+                            if (Main.düşmanlar.get(i).getID() == 2) {
+
+                                for (var b : Main.kenarlar) {
+
+                                    if (b.kenarX == x && b.kenarY == y) {
+
+                                        Kenar azmanBasla = b;
+                                        Main.yollar.add(azmanBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    int index = Main.yollar.get(i).size() - 1;
+                                    String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                    x = Integer.parseInt(ayraç[0]);
+                                    y = Integer.parseInt(ayraç[1]);
+
+                                    Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                    Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                    Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                }
+
+                            }
+
+                        }
+
+                        repaint();
+                    }
+
+                }
+
+            }
+
+        }
+
+        if (c == KeyEvent.VK_UP) {
+
+            int x = Main.şirin.getLokasyon().getX();
+            int y = Main.şirin.getLokasyon().getY();
+
+            if (Main.şirin.getID() == 1 && Main.şirin.getSkor() > 0) {
+
+                if ((y - 1) >= 0) {
+
+                    if (Main.Harita[y - 1][x] == 1) {
+
+                        Main.şirin.getLokasyon().setY(y - 1);
+
+                        Main.kenarlar.removeAll(Main.kenarlar);
+                        Main.yollar.removeAll(Main.yollar);
+
+                        for (int i = 0; i < 11; i++) {
+
+                            for (int j = 0; j < 13; j++) {
+
+                                Kenar kenar = new Kenar();
+
+                                if (Main.Harita[i][j] == 1) {
+
+                                    kenar.kenarY = i;
+                                    kenar.kenarX = j;
+                                    Main.kenarlar.add(kenar);
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var k : Main.kenarlar) {
+
+                            for (var l : Main.kenarlar) {
+
+                                if (k.kenarX == l.kenarX && k.kenarY + 1 == l.kenarY) {//alt komşu
+
+                                    k.komşu[0] = l;
+
+                                } else if (k.kenarX == l.kenarX && k.kenarY - 1 == l.kenarY) {//üst komşu
+
+                                    k.komşu[1] = l;
+
+                                } else if (k.kenarX + 1 == l.kenarX && k.kenarY == l.kenarY) {//sağ komşu
+
+                                    k.komşu[2] = l;
+
+                                } else if (k.kenarX - 1 == l.kenarX && k.kenarY == l.kenarY) {//sol komşu
+
+                                    k.komşu[3] = l;
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var a : Main.kenarlar) {
+
+                            if (a.kenarX == Main.şirin.getLokasyon().getX() && a.kenarY == Main.şirin.getLokasyon().getY()) {
+
+                                Kenar başlangıç = a;
+                                başlangıç.uzunluk = 0;
+                                Main.kısaYolHesapla(başlangıç);
+
+                            }
+
+                        }
+
+                        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+
+                            x = Main.düşmanlar.get(i).getLokasyon().getX();
+                            y = Main.düşmanlar.get(i).getLokasyon().getY();
+
+                            if (Main.düşmanlar.get(i).getID() == 1) {
+
+                                for (var a : Main.kenarlar) {
+
+                                    if (a.kenarX == x && a.kenarY == y) {
+
+                                        Kenar gargamelBasla = a;
+                                        Main.yollar.add(gargamelBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    if (Main.yollar.get(i).size() >= 2) {
+
+                                        int index = Main.yollar.get(i).size() - 2;
+                                        String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                        x = Integer.parseInt(ayraç[0]);
+                                        y = Integer.parseInt(ayraç[1]);
+
+                                        Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                        Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                    }
+                                }
+
+                            }
+                            if (Main.düşmanlar.get(i).getID() == 2) {
+
+                                for (var b : Main.kenarlar) {
+
+                                    if (b.kenarX == x && b.kenarY == y) {
+
+                                        Kenar azmanBasla = b;
+                                        Main.yollar.add(azmanBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    int index = Main.yollar.get(i).size() - 1;
+                                    String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                    x = Integer.parseInt(ayraç[0]);
+                                    y = Integer.parseInt(ayraç[1]);
+
+                                    Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                    Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                    Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                }
+
+                            }
+
+                        }
+                        repaint();
+                    }
+
+                }
+
+            }
+
+            if (Main.şirin.getID() == 2 && Main.şirin.getSkor() > 0) {
+
+                if ((y - 2) >= 0) {
+
+                    if (Main.Harita[y - 2][x] == 1 && Main.Harita[y - 1][x] != 0) {
+
+                        Main.şirin.getLokasyon().setY(y - 2);
+
+                        Main.kenarlar.removeAll(Main.kenarlar);
+                        Main.yollar.removeAll(Main.yollar);
+
+                        for (int i = 0; i < 11; i++) {
+
+                            for (int j = 0; j < 13; j++) {
+
+                                Kenar kenar = new Kenar();
+
+                                if (Main.Harita[i][j] == 1) {
+
+                                    kenar.kenarY = i;
+                                    kenar.kenarX = j;
+                                    Main.kenarlar.add(kenar);
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var k : Main.kenarlar) {
+
+                            for (var l : Main.kenarlar) {
+
+                                if (k.kenarX == l.kenarX && k.kenarY + 1 == l.kenarY) {//alt komşu
+
+                                    k.komşu[0] = l;
+
+                                } else if (k.kenarX == l.kenarX && k.kenarY - 1 == l.kenarY) {//üst komşu
+
+                                    k.komşu[1] = l;
+
+                                } else if (k.kenarX + 1 == l.kenarX && k.kenarY == l.kenarY) {//sağ komşu
+
+                                    k.komşu[2] = l;
+
+                                } else if (k.kenarX - 1 == l.kenarX && k.kenarY == l.kenarY) {//sol komşu
+
+                                    k.komşu[3] = l;
+
+                                }
+
+                            }
+
+                        }
+
+                        for (var a : Main.kenarlar) {
+
+                            if (a.kenarX == Main.şirin.getLokasyon().getX() && a.kenarY == Main.şirin.getLokasyon().getY()) {
+
+                                Kenar başlangıç = a;
+                                başlangıç.uzunluk = 0;
+                                Main.kısaYolHesapla(başlangıç);
+
+                            }
+
+                        }
+
+                        for (int i = 0; i < Main.düşmanlar.size(); i++) {
+
+                            x = Main.düşmanlar.get(i).getLokasyon().getX();
+                            y = Main.düşmanlar.get(i).getLokasyon().getY();
+
+                            if (Main.düşmanlar.get(i).getID() == 1) {
+
+                                for (var a : Main.kenarlar) {
+
+                                    if (a.kenarX == x && a.kenarY == y) {
+
+                                        Kenar gargamelBasla = a;
+                                        Main.yollar.add(gargamelBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    if (Main.yollar.get(i).size() >= 2) {
+
+                                        int index = Main.yollar.get(i).size() - 2;
+                                        String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                        x = Integer.parseInt(ayraç[0]);
+                                        y = Integer.parseInt(ayraç[1]);
+
+                                        Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                        Main.düşmanlar.get(i).getLokasyon().setY(y);
+
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+                                        Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                    }
+                                }
+
+                            }
+                            if (Main.düşmanlar.get(i).getID() == 2) {
+
+                                for (var b : Main.kenarlar) {
+
+                                    if (b.kenarX == x && b.kenarY == y) {
+
+                                        Kenar azmanBasla = b;
+                                        Main.yollar.add(azmanBasla.yol);
+                                    }
+
+                                }
+
+                                if (Main.yollar.get(i).size() > 0) {
+
+                                    int index = Main.yollar.get(i).size() - 1;
+                                    String[] ayraç = Main.yollar.get(i).get(index).split(",");
+                                    x = Integer.parseInt(ayraç[0]);
+                                    y = Integer.parseInt(ayraç[1]);
+
+                                    Main.düşmanlar.get(i).getLokasyon().setX(x);
+                                    Main.düşmanlar.get(i).getLokasyon().setY(y);
+                                    Main.yollar.get(i).remove(Main.yollar.get(i).size() - 1);
+
+                                }
+
+                            }
+
+                        }
+
+                        repaint();
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+
+    }
+
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+karakter.java
+public class karakter {
+    
+    public int ID;
+    public String ad;
+    public String tür;
+    public lokasyon lokasyon;
+   
+    public karakter(int ID, String ad, String tür, lokasyon lokasyon) {
+        this.ID = ID;
+        this.ad = ad;
+        this.tür = tür;
+        this.lokasyon = lokasyon;
+    }
+    
+    public karakter(){
+        
+        
+    }
+
+    public int getID() {
+        return ID;
+    }
+
+    public void setID(int ID) {
+        this.ID = ID;
+    }
+
+    public String getAd() {
+        return ad;
+    }
+
+    public void setAd(String ad) {
+        this.ad = ad;
+    }
+
+    public String getTür() {
+        return tür;
+    }
+
+    public void setTür(String tür) {
+        this.tür = tür;
+    }
+
+    public lokasyon getLokasyon() {
+        return lokasyon;
+    }
+
+    public void setLokasyon(lokasyon lokasyon) {
+        this.lokasyon = lokasyon;
+    }
+
+    public void EnKısaYol(){
+        
+    }
+    
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+oyuncu.java
+public class oyuncu extends karakter{
+    
+    public int Skor;
+
+    public oyuncu(int Skor, int ID, String ad, String tür, lokasyon lokasyon) {
+        super(ID, ad, tür, lokasyon);
+        this.Skor = Skor;
+    }
+
+    public oyuncu() {
+        
+    }
+
+    public int getSkor() {
+        return Skor;
+    }
+
+    public void setSkor(int Skor) {
+        this.Skor = Skor;
+    }
+    
+    
+    
+    public void PuaniGoster(){
+        
+        System.out.println("Skor"+this.getSkor());
+        
+    }
+
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+düşman.java
+public class düşman extends karakter{
+
+    public düşman(int ID, String ad, String tür, lokasyon lokasyon) {
+        super(ID, ad, tür, lokasyon);
+    }
+
+    public düşman() {
+    }
+
+   
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+tembelŞirin.java
+public class tembelŞirin extends oyuncu {
+
+    public tembelŞirin(int Skor, int ID, String ad, String tür, lokasyon lokasyon) {
+        super(Skor, ID, ad, tür, lokasyon);
+    }
+
+    public tembelŞirin() {
+    }
+    
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+gözlüklüŞirin.java
+public class gözlüklüŞirin extends oyuncu {
+
+    public gözlüklüŞirin(int Skor, int ID, String ad, String tür, lokasyon lokasyon) {
+        super(Skor, ID, ad, tür, lokasyon);
+    }
+
+    public gözlüklüŞirin() {
+    }
+    
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+gargamel.java
+public class gargamel extends düşman{
+
+    public gargamel(int ID, String ad, String tür, lokasyon lokasyon) {
+        super(ID, ad, tür, lokasyon);
+    }
+
+    public gargamel() {
+    }
+
+    
+    
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+azman.java
+public class azman extends düşman{
+
+    public azman(int ID, String ad, String tür, lokasyon lokasyon) {
+        super(ID, ad, tür, lokasyon);
+    }
+
+    public azman() {
+    }
+    
+    
+    
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+lokasyon.java
+public class lokasyon {
+    
+    public int x;
+    public int y;
+
+    public lokasyon(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+    
+    
+    
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+obje.java
+public class obje {
+    
+}
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

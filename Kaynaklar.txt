@@ -1,0 +1,12 @@
+https://www.youtube.com/watch?v=LpJceTbzJFo&list=PLao61YMVdKUGCdbibBTIGFR0QSsmf53Ew
+https://stackoverflow.com/questions/1006611/java-swing-timer
+https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
+https://www.geeksforgeeks.org/dijkstras-algorithm-for-adjacency-list-representation-greedy-algo-8/
+https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-in-java-using-priorityqueue/
+https://www.bogotobogo.com/Java/tutorials/javagraphics3.php
+https://zetcode.com/javagames/animation/
+https://java2blog.com/dijkstra-java/
+https://stackabuse.com/graphs-in-java-dijkstras-algorithm/
+https://www.softwaretestinghelp.com/dijkstras-algorithm-in-java/
+
+
